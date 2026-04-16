@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Stock NPSP-CI — 10 Avril 2026</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f5f5f5;color:#222;font-size:14px}
+.header{background:#1a3a5c;color:#fff;padding:16px 24px;display:flex;justify-content:space-between;align-items:center}
+.header h1{font-size:16px;font-weight:600}
+.header .date{background:rgba(255,255,255,0.2);padding:4px 12px;border-radius:6px;font-size:12px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px 24px;background:#fff;border-bottom:1px solid #e0e0e0}
+.kpi{text-align:center;padding:12px;border-radius:8px}
+.kpi-val{font-size:28px;font-weight:700;line-height:1.1}
+.kpi-lbl{font-size:11px;color:#666;margin-top:4px}
+.kpi.red{background:#FFF0F0}.kpi.red .kpi-val{color:#C0392B}
+.kpi.orange{background:#FFF8E6}.kpi.orange .kpi-val{color:#E67E22}
+.kpi.green{background:#F0FFF0}.kpi.green .kpi-val{color:#27AE60}
+.kpi.purple{background:#F5F0FF}.kpi.purple .kpi-val{color:#8E44AD}
+.tabs{display:flex;gap:4px;padding:12px 24px;background:#fff;border-bottom:1px solid #e0e0e0;flex-wrap:wrap}
+.tab{padding:6px 14px;border-radius:6px;border:1px solid #ddd;font-size:12px;cursor:pointer;background:#fafafa;color:#555}
+.tab.active{background:#1a3a5c;color:#fff;border-color:#1a3a5c}
+.panel{display:none;padding:16px 24px}.panel.active{display:block}
+.section-title{font-size:13px;font-weight:600;color:#333;margin:12px 0 8px;padding-bottom:4px;border-bottom:2px solid #e0e0e0}
+.table-wrap{overflow-x:auto;margin-bottom:16px}
+table{width:100%;border-collapse:collapse;font-size:12px;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
+th{background:#f0f4f8;padding:8px 10px;text-align:left;font-weight:600;font-size:11px;color:#555;white-space:nowrap}
+td{padding:7px 10px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafbfc}
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;white-space:nowrap}
+.b-rupture{background:#FFEBEB;color:#C0392B;border:1px solid #F5C6CB}
+.b-risque{background:#FFF3CD;color:#856404;border:1px solid #FFECB5}
+.b-bien{background:#D4EDDA;color:#155724;border:1px solid #C3E6CB}
+.b-surstock{background:#EDE7FF;color:#5B2C6F;border:1px solid #D8BEF0}
+.b-critique{background:#FFE5CC;color:#7D3500;border:1px solid #FFD0A0}
+.alert-card{background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 2px rgba(0,0,0,0.05)}
+.alert-card.p1{border-left:4px solid #C0392B}
+.alert-card.p2{border-left:4px solid #E67E22}
+.alert-card.p3{border-left:4px solid #27AE60}
+.alert-title{font-size:12px;font-weight:600;color:#222}
+.alert-body{font-size:11px;color:#555;margin-top:5px;line-height:1.6}
+.p1-tag{font-size:9px;background:#C0392B;color:#fff;padding:2px 6px;border-radius:4px;margin-left:6px}
+.p2-tag{font-size:9px;background:#E67E22;color:#fff;padding:2px 6px;border-radius:4px;margin-left:6px}
+.gap-item{font-size:12px;color:#555;padding:6px 0;border-bottom:1px solid #f0f0f0;line-height:1.5}
+.gap-item:last-child{border-bottom:none}
+.gap-item b{color:#222}
+.perem-warn{color:#C0392B;font-weight:600}
+.prog-block{background:#fff;border-radius:8px;padding:12px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>Tableau de bord État des Stocks — NPSP-CI / Projet LHSPLA</h1>
+  <div class="date">État au 10 avril 2026</div>
+</div>
+
+<div class="kpis">
+  <div class="kpi red"><div class="kpi-val">7</div><div class="kpi-lbl">Ruptures (MSD=0 centrale)</div></div>
+  <div class="kpi orange"><div class="kpi-val">18</div><div class="kpi-lbl">Produits à risque (MSD&lt;5)</div></div>
+  <div class="kpi green"><div class="kpi-val">22</div><div class="kpi-lbl">Bien stockés (5≤MSD≤12)</div></div>
+  <div class="kpi purple"><div class="kpi-val">14</div><div class="kpi-lbl">Surstockés (MSD&gt;12)</div></div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('alerts',this)">🚨 Alertes critiques</button>
+  <button class="tab" onclick="showTab('pnls',this)">PNLS (VIH)</button>
+  <button class="tab" onclick="showTab('pnlp',this)">PNLP (Paludisme)</button>
+  <button class="tab" onclick="showTab('pnlt',this)">PNLT / PNSME</button>
+  <button class="tab" onclick="showTab('pipeline',this)">Pipeline & Gaps</button>
+  <button class="tab" onclick="showTab('perem',this)">⚠️ Péremptions</button>
+</div>
+
+<div id="alerts" class="panel active">
+  <div class="section-title">PRIORITÉ 1 — Action immédiate (7 jours) — Direction / MTP</div>
+  <div class="alert-card p1">
+    <div class="alert-title">TLD B/30 — MSD 3,9 — RUPTURE CENTRALE <span class="p1-tag">P1</span></div>
+    <div class="alert-body">Stock central : 0 | Périphérie : 79 841 boites | CMM : 20 323. Pipeline : 120 000 boites GOVCI attendues en avril 2026 (en attente retour fournisseur avec documents d'expédition). 60 000 boites GOVCI prévues juillet, 60 000 boites sans financement pour octobre 2026.<br><b>Action :</b> Relancer fournisseur GOVCI immédiatement pour documents d'expédition.</div>
+  </div>
+  <div class="alert-card p1">
+    <div class="alert-title">TLD B/180 — MSD 1,3 — RUPTURE CENTRALE <span class="p1-tag">P1</span></div>
+    <div class="alert-body">Stock central : 0 | Périphérie : 13 258 boites | CMM : 9 928. Pipeline : 12 981 boites GOVCI annoncées avril (attente docs). 20 000 boites reportées en juillet 2026. Gap 20 000 boites en octobre 2026.<br><b>Action :</b> Confirmer réception avril + identifier bridging gap octobre.</div>
+  </div>
+  <div class="alert-card p1">
+    <div class="alert-title">HP Rifapentine+INH B/36 — MSD 3,3 — RUPTURE CENTRALE + GAPS <span class="p1-tag">P1</span></div>
+    <div class="alert-body">Stock central : 0 | Périphérie : 9 451 boites | CMM : 2 803. 6 622 boites FM commandées avril 2026. Gaps : 15 000 boites mai, 20 000 boites mai, 15 000 boites septembre 2026.<br><b>Action :</b> Relancer FM + plan bridging PNLT sous 7 jours.</div>
+  </div>
+  <div class="alert-card p1">
+    <div class="alert-title">DBS Card — MSD 0 — RUPTURE TOTALE <span class="p1-tag">P1</span></div>
+    <div class="alert-body">Stock central : 0 | Périphérie : 0 | CMM : 600. Pipeline : 260 kits/50 GOVCI bloqués (problème de paiement fournisseur).<br><b>Action :</b> Résoudre blocage paiement sous 48h — Finance/MTP.</div>
+  </div>
+  <div class="alert-card p1">
+    <div class="alert-title">DHAP 40/320 — MSD 0,8 — CRITIQUE PNLP <span class="p1-tag">P1</span></div>
+    <div class="alert-body">Stock central : 0 | Périphérie : 17 483 traitements | CMM : 20 254. 76 325 traitements FM reçus ce 10/04/2026.<br><b>Action :</b> Distribution immédiate depuis réception — PNLP / CAD.</div>
+  </div>
+  <div class="alert-card p1">
+    <div class="alert-title">DHAP 80/640 — MSD 0,8 — CRITIQUE PNLP <span class="p1-tag">P1</span></div>
+    <div class="alert-body">Stock central : 0 | Périphérie : 41 822 traitements | CMM : 48 650. 365 000 traitements FM expédiés pour juin 2026.<br><b>Action :</b> Anticiper réception + surveiller statut expédition.</div>
+  </div>
+  <div class="alert-card p1">
+    <div class="alert-title">Préservatif masculin — MSD 0,5 — CRITIQUE <span class="p1-tag">P1</span></div>
+    <div class="alert-body">Stock central : 0 | Périphérie : 1 197 180 | CMM : 2 367 000. 8 087 040 préservatifs FM reçus le 10/04/2026. 18 604 800 attendus courant avril.<br><b>Action :</b> Confirmer enlèvement + lancer distribution — CAD Abidjan/Bouaké.</div>
+  </div>
+
+  <div class="section-title" style="margin-top:20px">PRIORITÉ 2 — Surveillance renforcée (14 jours)</div>
+  <div class="alert-card p2">
+    <div class="alert-title">ABC/3TC — MSD 1,1 — Transition vers pALD <span class="p2-tag">P2</span></div>
+    <div class="alert-body">Stock national : 7 317 boites. CMM : 6 313. Transition en cours. Suivi hebdomadaire requis pour éviter rupture pendant transition.</div>
+  </div>
+  <div class="alert-card p2">
+    <div class="alert-title">ABC/3TC 600/300 — MSD 3,2 — RUPTURE CENTRALE + Fournisseur défaillant <span class="p2-tag">P2</span></div>
+    <div class="alert-body">Fournisseur GOVCI incapable de rapprocher commande 15 000 boites août 2026. Alternative urgente à identifier — Direction.</div>
+  </div>
+  <div class="alert-card p2">
+    <div class="alert-title">COBAS 4800 HIV-1 — MSD 2,3 — RISQUE Charge virale <span class="p2-tag">P2</span></div>
+    <div class="alert-body">480 kits PEPFAR arrivés aéroport 05/04/2026. Procédures enlèvement en cours. MSD insuffisant si retard. Accélérer procédures douanières.</div>
+  </div>
+  <div class="alert-card p2">
+    <div class="alert-title">SP 25/500 — MSD 2,3 — RUPTURE CENTRALE PNLP <span class="p2-tag">P2</span></div>
+    <div class="alert-body">Plusieurs livraisons en cours (GOVCI AI&AE en attente, FM). Vérifier statuts autorisations import-export.</div>
+  </div>
+  <div class="alert-card p2">
+    <div class="alert-title">Artésunate 100mg — MSD 4,1 — RUPTURE CENTRALE + Requête FM non faite <span class="p2-tag">P2</span></div>
+    <div class="alert-body">Requête de rapprochement FM non soumise par PNLP. 6 400 boites commandées août 2026. Action PNLP immédiate requise.</div>
+  </div>
+  <div class="alert-card p2">
+    <div class="alert-title">Misoprostol — MSD 1,8 — RUPTURE CENTRALE PNSME <span class="p2-tag">P2</span></div>
+    <div class="alert-body">38 325 boites UNFPA attendues avril 2026. 35 392 boites sans financement octobre 2026. Alerter bailleurs pour gap.</div>
+  </div>
+  <div class="alert-card p2">
+    <div class="alert-title">Pyridoxine B6 — MSD 2,7 — Stock périphérique = ZERO <span class="p2-tag">P2</span></div>
+    <div class="alert-body">Stock central 390 000 cp mais périphérie vide. CMM : 142 316. Distribution urgente vers la périphérie requise — CAD.</div>
+  </div>
+  <div class="alert-card p2">
+    <div class="alert-title">GeneXpert MTB/RIF Ultra — MSD 1,8 — RISQUE <span class="p2-tag">P2</span></div>
+    <div class="alert-body">Stock national 261 kits. CMM 139. 1 379 kits FM approuvés fin avril 2026. Suivre réception.</div>
+  </div>
+</div>
+
+<div id="pnls" class="panel">
+  <div class="section-title">ARV 1ère ligne adulte</div>
+  <div class="table-wrap"><table>
+    <tr><th>Produit</th><th>Centrale</th><th>Périphérie</th><th>National</th><th>CMM</th><th>MSD</th><th>Statut</th><th>Pér. Centrale</th></tr>
+    <tr><td>TLD B/30</td><td>0</td><td>79 841</td><td>79 841</td><td>20 323</td><td>3,9</td><td><span class="badge b-rupture">RUPTURE CTLE</span></td><td>—</td></tr>
+    <tr><td>TLD B/90</td><td>644 782</td><td>258 973</td><td>903 755</td><td>73 588</td><td>12,2</td><td><span class="badge b-surstock">SURSTOCK</span></td><td>Jun 2028</td></tr>
+    <tr><td>TLD B/180</td><td>0</td><td>13 258</td><td>13 258</td><td>9 928</td><td>1,3</td><td><span class="badge b-rupture">RUPTURE CTLE</span></td><td>—</td></tr>
+    <tr><td>TLE 400</td><td>18 719</td><td>2 531</td><td>21 250</td><td>487</td><td>43,6</td><td><span class="badge b-surstock">SURSTOCK</span></td><td>Nov 2027</td></tr>
+    <tr><td>ABC 300 mg</td><td>4 034</td><td>505</td><td>4 539</td><td>134</td><td>33,8</td><td><span class="badge b-surstock">SURSTOCK</span></td><td>Nov 2028</td></tr>
+    <tr><td>ABC/3TC 600/300</td><td>0</td><td>9 647</td><td>9 647</td><td>2 971</td><td>3,2</td><td><span class="badge b-rupture">RUPTURE CTLE</span></td><td>—</td></tr>
+    <tr><td>ABC/3TC/DTG</td><td>20 172</td><td>13 530</td><td>33 703</td><td>3 005</td><td>11,2</td><td><span class="badge b-bien">BIEN STOCKÉ</span></td><td>Sep 2027</td></tr>
+    <tr><td>CTX 960</td><td>10 126 540</td><td>2 501 480</td><td>12 628 020</td><td>4 815 418</td><td>2,6</td><td><span class="badge b-risque">RISQUE</span></td><td>Oct 2027</td></tr>
+  </table></div>
+
+  <div class="section-title">ARV 1ère ligne enfant & prophylaxie</div>
+  <div class="table-wrap"><table>
+    <tr><th>Produit</th><th>Centrale</th><th>Périphérie</th><th>CMM</th><th>MSD</th><th>Statut</th></tr>
+    <tr><td>pALD</td><td>12 713</td><td>15 210</td><td>3 800</td><td>7,3</td><td><span class="badge b-bien">BIEN STOCKÉ</span></td></tr>
+    <tr><td>ABC/3TC</td><td>140</td><td>7 177</td><td>6 313</td><td>1,1</td><td><span class="badge b-risque">RISQUE</span></td></tr>
+    <tr><td>DTG 10 mg</td><td>0</td><td>1 277</td><td>1 104</td><td>1,1</td><td><span class="badge b-rupture">RUPTURE CTLE</span></td></tr>
+    <tr><td>DTG 50 mg</td><td>9 105</td><td>24 217</td><td>5 445</td><td>6,1</td><td><span class="badge b-bien">BIEN STOCKÉ</span></td></tr>
+    <tr><td>CTX 120</td><td>737 000</td><td>1 178 861</td><td>425 172</td><td>4,5</td><td><span class="badge b-risque">RISQUE</span></td></tr>
+    <tr><td>Névirapine SP</td><td>991</td><td>4 003</td><td>954</td><td>5,2</td><td><span class="badge b-bien">BIEN STOCKÉ</span></td></tr>
+    <tr><td>Zidovudine SP</td><td>2 290</td><td>2 301</td><td>540</td><td>8,5</td><td><span class="badge b-bien">BIEN STOCKÉ</span></td></tr>
+  </table></div>
+
+  <div class="section-title">Tests rapides VIH</div>
+  <div class="table-wrap"><table>
+    <tr><th>Produit</th><th>Centrale</th><th>Périphérie</th><th>CMM</th><th>MSD</th><th>Statut</th><th>Pér. Centrale</th></tr>
+    <tr><td>WONDFO HIV 1/2</td><td>84 893</td><td>31 958</td><td>12 978</td><td>9</td><td><span class="badge b-bien">BIEN STOCKÉ</span></td><td>Fév 2027</td></tr>
+    <tr><td>UNI-GOLD HIV 1/2</td><td>2 593</td><td>2 296</td><td>210</td><td>23,5</td><td><span class="badge b-surstock">SURSTOCK</span></td><td>Jan 2027</td></tr>
+    <tr><td>Bioline HIV 1/2</td><td>2 176</td><td>781</td><td>124</td><td>23,2</td><td><span class="badge b-surstock">SURSTOCK</span></td><td>Avr 2027</td></tr>
+    <tr><td>AUTO-TEST HIV</td><td>0</td><td>69 037</td><td>13 417</td><td>5,1</td><td><span class="badge b-bien">BIEN STOCKÉ</span></td><td>—</td></tr>
+    <tr><td>StatPak HIV 1/2</td><td>1 881</td><td>1 965</td><td>294</td><td>13</td><td><span class="badge b-surstock">SURSTOCK</span></td><td>Déc 2026</td></tr>
+    <tr><td>BIOLINE Syphilis</td><td>0</td><td>3 443</td><td>1 460</td><td>2,3</td><td><span class="badge b-rupture">RUPTURE CTLE</span></td><td>—</td></tr>
+    <tr><td>BIOLINE HIV/Syph Duo</td><td>59 000</td><td>0</td><td>4 124</td><td>14,3</td><td><span class="badge b-surstock">SURSTOCK</span></td><td>Jun 2027</td></tr>
+    <tr><td>Ag HBs Test Rapide</td><td>45 120</td><td>29 466</td><td>29 825</td><td>2,5</td><td><span class="badge b-risque">RISQUE</span></td><td>Avr 2027</td></tr>
+  </table></div>
+
+  <div class="section-title">Charge virale / EID / GenExpert / CD4</div>
+  <div class="table-wrap"><table>
+    <tr><th>Produit</th><th>Centrale</th><th>Périphérie</th><th>CMM</th><th>MSD</th><th>Statut</th><th>Pér. Centrale</th></tr>
+    <tr><td>Cobas 5800/6800 HIV-1</td><td>715</td><td>131</td><td>117</td><td>7,2</td><td><span class="badge b-bien">BIEN STOCKÉ</span></td><td>Déc 2026</td></tr>
+    <tr><td>COBAS 4800 HIV-1</td><td>145</td><td>266</td><td>178</td><td>2,3</td><td><span class="badge b-risque">RISQUE</span></td><td>Mai 2027</td></tr>
+    <tr><td>m-Pima Detect HIV1/2</td><td>4 382</td><td>2 319</td><td>500</td><td>13,4</td><td><span class="badge b-surstock">SURSTOCK</span></td><td class="perem-warn">Jul 2026 ⚠</td></tr>
+    <tr><td>GenExpert HIV-1 VL</td><td>642</td><td>346</td><td>96</td><td>10,2</td><td><span class="badge b-bien">BIEN STOCKÉ</span></td><td>Nov 2026</td></tr>
+    <tr><td>GeneXpert MTB/RIF Ultra</td><td>221</td><td>40</td><td>139</td><td>1,8</td><td><span class="badge b-risque">RISQUE</span></td><td>Mar 2027</td></tr>
+    <tr><td>PIMA CD4</td><td>121</td><td>0</td><td>7</td><td>17,2</td><td><span class="badge b-surstock">SURSTOCK</span></td><td>Fév 2027</td></tr>
+  </table></div>
+
+  <div class="section-title">PREP & Condoms & Consommables</div>
+  <div class="table-wrap"><table>
+    <tr><th>Produit</th><th>Centrale</th><th>Périphérie</th><th>CMM</th><th>MSD</th><th>Statut</th></tr>
+    <tr><td>TDF/3TC 300/300 (PrEP)</td><td>18 816</td><td>25 075</td><td>4 792</td><td>9,1</td><td><span class="badge b-bien">BIEN STOCKÉ</span></td></tr>
+    <tr><td>Préservatif masculin</td><td>0</td><td>1 197 180</td><td>2 367 000</td><td>0,5</td><td><span class="badge b-critique">CRITIQUE</span></td></tr>
+    <tr><td>Préservatif féminin</td><td>300 000</td><td>69 037</td><td>30 000</td><td>12,3</td><td><span class="badge b-surstock">SURSTOCK</span></td></tr>
+    <tr><td>Gel Lubrifiant</td><td>15 094 000</td><td>2 683 778</td><td>547 000</td><td>32,5</td><td><span class="badge b-surstock">SURSTOCK ⚠ Pér.</span></td></tr>
+    <tr><td>Gant Sans Talc</td><td>30 000</td><td>413</td><td>248</td><td>122,6</td><td><span class="badge b-surstock">SURSTOCK EXTRÊME</span></td></tr>
+    <tr><td>Tube à EDTA Violet</td><td>203</td><td>2 992</td><td>698</td><td>4,5</td><td><span class="badge b-risque">RISQUE</span></td></tr>
+    <tr><td>DBS Card</td><td>0</td><td>0</td><td>600</td><td>0</td><td><span class="badge b-rupture">RUPTURE TOTALE</span></td></tr>
+  </table></div>
+</div>
+
+<div id="pnlp" class="panel">
+  <div class="section-title">Antipaludéens — PNLP</div>
+  <div class="table-wrap"><table>
+    <tr><th>Produit</th><th>Centrale</th><th>Périphérie</th><th>CMM</th><th>MSD</th><th>Statut</th></tr>
+    <tr><td>AL 6 B/30</td><td>4</td><td>12 377</td><td>3 067</td><td>4,0</td><td><span class="badge b-risque">RISQUE</span></td></tr>
+    <tr><td>AA 2-11 mois B/25</td><td>66</td><td>8 038</td><td>1 756</td><td>4,6</td><td><span class="badge b-risque">RISQUE</span></td></tr>
+    <tr><td>AL 12 B/30</td><td>23</td><td>12 720</td><td>3 332</td><td>3,8</td><td><span class="badge b-risque">RISQUE</span></td></tr>
+    <tr><td>AA 1-5 ans B/25</td><td>10 575</td><td>8 469</td><td>6 027</td><td>3,1</td><td><span class="badge b-risque">RISQUE</span></td></tr>
+    <tr><td>AL 60/360 B/30</td><td>4</td><td>14 338</td><td>3 831</td><td>3,7</td><td><span class="badge b-risque">RISQUE</span></td></tr>
+    <tr><td>DHAP 40/320</td><td>0</td><td>17 483</td><td>20 254</td><td>0,8</td><td><span class="badge b-critique">CRITIQUE</span></td></tr>
+    <tr><td>AL 24/80/480</td><td>54 033</td><td>9 946</td><td>7 120</td><td>8,9</td><td><span class="badge b-bien">BIEN STOCKÉ</span></td></tr>
+    <tr><td>DHAP 80/640</td><td>0</td><td>41 822</td><td>48 650</td><td>0,8</td><td><span class="badge b-critique">CRITIQUE</span></td></tr>
+    <tr><td>Artésunate 100mg B/2</td><td>0</td><td>4 403</td><td>1 055</td><td>4,1</td><td><span class="badge b-rupture">RUPTURE CTLE</span></td></tr>
+    <tr><td>TDR</td><td>6 217 030</td><td>1 418 866</td><td>761 240</td><td>10</td><td><span class="badge b-bien">BIEN STOCKÉ</span></td></tr>
+    <tr><td>SP 25/500 cp</td><td>0</td><td>1 331 294</td><td>567 171</td><td>2,3</td><td><span class="badge b-rupture">RUPTURE CTLE</span></td></tr>
+  </table></div>
+  <div class="alert-card p2" style="margin-top:12px">
+    <div class="alert-title">Action PNLP requise : requêtes FM non soumises <span class="p2-tag">P2</span></div>
+    <div class="alert-body">La requête de rapprochement auprès du FM n'a pas été faite par le PNLP pour l'Artésunate rectocaps et l'AL_6. Délai max : 7 jours.</div>
+  </div>
+  <div class="alert-card p2">
+    <div class="alert-title">TDR — Retard FM : livraison reportée <span class="p2-tag">P2</span></div>
+    <div class="alert-body">540 913 kits initialement attendus avril 2026 → reportés en juin (270 456 kits) et novembre 2026 (270 457 kits). Stock national actuel suffisant (MSD 10) mais à surveiller.</div>
+  </div>
+</div>
+
+<div id="pnlt" class="panel">
+  <div class="section-title">PNLT — Tuberculose / TPT</div>
+  <div class="table-wrap"><table>
+    <tr><th>Produit</th><th>Centrale</th><th>Périphérie</th><th>CMM</th><th>MSD</th><th>Statut</th><th>Pér. Centrale</th></tr>
+    <tr><td>H 100 mg Isoniazide</td><td>3 239</td><td>2 921</td><td>198</td><td>31,1</td><td><span class="badge b-surstock">SURSTOCK</span></td><td>Jan 2027</td></tr>
+    <tr><td>H 300 mg Isoniazide</td><td>1 032</td><td>1 158</td><td>143</td><td>15,3</td><td><span class="badge b-surstock">SURSTOCK</span></td><td>Oct 2027</td></tr>
+    <tr><td>Pyridoxine B6 50mg</td><td>390 000</td><td>0</td><td>142 316</td><td>2,7</td><td><span class="badge b-risque">RISQUE PÉRI.</span></td><td>Aoû 2028</td></tr>
+    <tr><td>HP Rifapentine+INH B/36</td><td>0</td><td>9 451</td><td>2 803</td><td>3,3</td><td><span class="badge b-rupture">RUPTURE CTLE</span></td><td>—</td></tr>
+  </table></div>
+  <div class="alert-card p2" style="margin-top:12px">
+    <div class="alert-title">Isoniazide — Échange PNLS/PNLT proposé <span class="p2-tag">P2</span></div>
+    <div class="alert-body">H100 en surstock (MSD 31,1 — péremption Jan 2027). Proposition d'échange entre PNLS et PNLT pour éviter péremption. Retour PNLS attendu.</div>
+  </div>
+
+  <div class="section-title" style="margin-top:20px">PNSME — Santé Mère-Enfant</div>
+  <div class="table-wrap"><table>
+    <tr><th>Produit</th><th>Centrale</th><th>Périphérie</th><th>CMM</th><th>MSD</th><th>Statut</th></tr>
+    <tr><td>Sulfate de Magnésium</td><td>14</td><td>24 960</td><td>1 845</td><td>13,5</td><td><span class="badge b-surstock">SURSTOCK</span></td></tr>
+    <tr><td>Gluconate de Calcium</td><td>0</td><td>1 415</td><td>190</td><td>7,4</td><td><span class="badge b-bien">BIEN STOCKÉ</span></td></tr>
+    <tr><td>Carbetocine B/10</td><td>8 286</td><td>3 599</td><td>464</td><td>25,6</td><td><span class="badge b-surstock">SURSTOCK</span></td></tr>
+    <tr><td>Acide Tranexamique</td><td>8 871</td><td>47 442</td><td>7 282</td><td>7,7</td><td><span class="badge b-bien">BIEN STOCKÉ</span></td></tr>
+    <tr><td>Misoprostol B/4</td><td>0</td><td>9 533</td><td>5 114</td><td>1,8</td><td><span class="badge b-risque">RISQUE</span></td></tr>
+  </table></div>
+</div>
+
+<div id="pipeline" class="panel">
+  <div class="section-title">Livraisons attendues / reçues — Avril 2026</div>
+  <div class="gap-item"><b>TLD B/90 (FM)</b> — 230 823 boites reçues le 01/04/2026 ✓</div>
+  <div class="gap-item"><b>DHAP 40/320 (FM)</b> — 76 325 traitements reçus le 10/04/2026 ✓</div>
+  <div class="gap-item"><b>Préservatifs masculins (FM)</b> — 8 087 040 reçus le 10/04/2026 ✓ (18,6M attendus courant avr.)</div>
+  <div class="gap-item"><b>TLD B/90 (PEPFAR)</b> — 100 000 boites au port 05/04/2026 → Enlèvement en cours</div>
+  <div class="gap-item"><b>COBAS 4800 (PEPFAR)</b> — 480 kits à l'aéroport 05/04/2026 → Enlèvement en cours</div>
+  <div class="gap-item"><b>AUTO-TEST HIV (PEPFAR)</b> — 20 000 tests à l'aéroport 31/03/2026 → Enlèvement en cours</div>
+  <div class="gap-item"><b>TLD B/30 (GOVCI)</b> — 120 000 boites annoncées avril → En attente documents fournisseur</div>
+  <div class="gap-item"><b>TLD B/180 (GOVCI)</b> — 12 981 boites → En attente docs expédition</div>
+  <div class="gap-item"><b>TLD B/90 (GOVCI)</b> — 66 699 boites courant avril → En attente docs</div>
+  <div class="gap-item"><b>CTX 960 (GOVCI PA2025)</b> — 15 213 000 cp sem. 13-17/04 + 23 077 000 fin avril + 1 690 000 cp PA2024</div>
+  <div class="gap-item"><b>SP 25/500 (GOVCI)</b> — 2 355 000 cp sem. 13-17/04 (AI&AE en cours) + 2 781 150 cp fin avril</div>
+  <div class="gap-item"><b>SP 25/500 (FM)</b> — 4 159 680 cp attendus en avril 2026</div>
+  <div class="gap-item"><b>HP Rifapentine (FM)</b> — 6 622 boites commandées pour avril 2026</div>
+  <div class="gap-item"><b>AUTO-TEST HIV (FM)</b> — 110 000 tests courant avril 2026</div>
+  <div class="gap-item"><b>GeneXpert MTB/RIF Ultra (FM)</b> — 1 379 kits approuvés fin avril 2026</div>
+  <div class="gap-item"><b>Névirapine SP (FM)</b> — 3 048 boites courant avril 2026</div>
+  <div class="gap-item"><b>DBS Card (GOVCI)</b> — 260 kits/50 bloqués (problème paiement fournisseur)</div>
+
+  <div class="section-title" style="margin-top:16px">Gaps identifiés — Sans financement ou retard confirmé</div>
+  <div class="gap-item"><b>TLD B/30</b> — Gap 60 000 boites sans financement en octobre 2026</div>
+  <div class="gap-item"><b>TLD B/90</b> — Gap 200 000 boites en septembre 2026 (sourcing en cours pour 150 000)</div>
+  <div class="gap-item"><b>TLD B/180</b> — 20 000 boites GOVCI reportées en juillet 2026 | Gap 20 000 boites en octobre 2026</div>
+  <div class="gap-item"><b>HP Rifapentine</b> — Gap 15 000 boites mai + 20 000 boites mai + 15 000 boites septembre 2026</div>
+  <div class="gap-item"><b>DTG 50 mg</b> — Gap 20 000 boites octobre 2026</div>
+  <div class="gap-item"><b>ABC/3TC 600/300</b> — Fournisseur GOVCI incapable de rapprocher commande 15 000 boites août 2026</div>
+  <div class="gap-item"><b>Carbetocine</b> — 610 000 ampoules sans financement en juillet 2026</div>
+  <div class="gap-item"><b>Misoprostol</b> — 35 392 boites sans financement en octobre 2026</div>
+  <div class="gap-item"><b>WONDFO HIV</b> — 61 508 kits sans financement en août 2026</div>
+  <div class="gap-item"><b>AL 6 B/30</b> — Requête rapprochement FM non faite par PNLP</div>
+  <div class="gap-item"><b>Artésunate rectocaps</b> — Requête rapprochement FM non faite par PNLP</div>
+</div>
+
+<div id="perem" class="panel">
+  <div class="section-title">Risques de péremption — Classés par urgence</div>
+  <div class="alert-card p1">
+    <div class="alert-title">m-Pima HIV1/2 (cartouches) — Péremption JUILLET 2026 à la centrale <span class="p1-tag">URGENT</span></div>
+    <div class="alert-body">382 cartouches en centrale avec péremption juillet 2026 (sur 4 382 total). Distribution/redistribution avant péremption requise. 4 000 cartouches PEPFAR attendues mai 2026 — vérifier dates de fabrication.</div>
+  </div>
+  <div class="alert-card p1">
+    <div class="alert-title">FLUCYTOSINE 500mg — Péremptions JUILLET et NOVEMBRE 2026 <span class="p1-tag">URGENT</span></div>
+    <div class="alert-body">552 boites en centrale, MSD 58,1. Risque de péremption confirmé dans la diapositive. Plan d'urgence : distribution accélérée ou destruction programmée. 18 boites FM attendues fin avril (surveiller dates).</div>
+  </div>
+  <div class="alert-card p1">
+    <div class="alert-title">Gel Lubrifiant — Péremptions AOÛT-SEPTEMBRE 2026 <span class="p1-tag">URGENT</span></div>
+    <div class="alert-body">15 094 000 sachets en centrale (MSD 32,5). Péremptions août-septembre 2026. Plan de distribution urgente multi-sites à activer immédiatement — CAD Abidjan/Bouaké.</div>
+  </div>
+  <div class="alert-card p2">
+    <div class="alert-title">StatPak HIV 1/2 — Péremption DÉCEMBRE 2026 à la centrale <span class="p2-tag">MODÉRÉ</span></div>
+    <div class="alert-body">1 881 kits en centrale. MSD 13. Proposition d'annuler commande FM octobre 2026 (retour PNLS attendu). Accélérer distribution stock actuel.</div>
+  </div>
+  <div class="alert-card p2">
+    <div class="alert-title">GenExpert HIV-1 VL — Péremption NOVEMBRE 2026 à la centrale <span class="p2-tag">MODÉRÉ</span></div>
+    <div class="alert-body">642 kits en centrale. MSD 10,2. 600 kits FM attendus août 2026. Accélérer allocation et distribution.</div>
+  </div>
+  <div class="alert-card p2">
+    <div class="alert-title">FLUCONAZOLE 200mg — Risque péremption signalé <span class="p2-tag">MODÉRÉ</span></div>
+    <div class="alert-body">221 600 gélules en centrale, MSD 31,8, péremption juillet 2027. Risque explicitement signalé dans le rapport. Plan d'allocation accéléré requis. 26 500 unités attendues novembre 2026 (à n'approuver qu'après vérification besoin).</div>
+  </div>
+  <div class="alert-card p3">
+    <div class="alert-title">BIOLINE Syphilis — Péremption SEPTEMBRE 2026 en périphérie</div>
+    <div class="alert-body">3 443 kits en périphérie. CMM en baisse avec introduction Syphilis Duo. Surveiller utilisation.</div>
+  </div>
+  <div class="alert-card p3">
+    <div class="alert-title">DETERMINE TB LAM — Péremption NOVEMBRE 2026</div>
+    <div class="alert-body">218 kits en périphérie. MSD 12,8. 200 kits FM commandés juin 2026. Surveiller consommation.</div>
+  </div>
+  <div class="alert-card p3">
+    <div class="alert-title">H 100 mg Isoniazide — Surstock avec péremption JANVIER 2027</div>
+    <div class="alert-body">MSD 31,1. Échange PNLS/PNLT proposé — retour PNLS attendu. À résoudre avant fin mai 2026.</div>
+  </div>
+</div>
+
+<script>
+function showTab(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>
